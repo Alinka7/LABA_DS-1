@@ -1,88 +1,105 @@
-from urllib import request
-
-def preprocess_raw_data(line):
-    if '/' in line:
-        return ''         
-    line = line.replace(' ', ',',2)         
-    return (line + '\n')
-
-def loadVHI():
-    url = "https://www.star.nesdis.noaa.gov/smcd/emb/vci/VH/get_provinceData.php?country=UKR&provinceID={}&year1=1981&year2=2019&type=Mean"
-    base_filename = r"vhi_"
-    for i in range(1, 28):
-        if i == 12 or i == 20:
-            continue
-        j = swap_id(i)
-        print('{}{}{}'.format('loading vhi_', j, '.csv'))  
-        local_url = url.format(str(i))
-        response = request.urlopen(local_url) 
-        csv = response.read() 
-        csv_str = str(csv)     
-        lines = csv_str.split("\\n")  
-        with open(base_filename + str(j) + ".csv", "w") as fx: 
-            fx.write("year,week,SMN,SMT,VCI,TCI,VHI\n") 
-            for line in lines:
-                fx.write(preprocess_raw_data(line))
-                
-
-def swap_id(i):
-    my_dict = { 
-    1:22,
-    2:24,
-    3:23,
-    4:25,
-    5:3,
-    6:4,
-    7:8,
-    8:19,
-    9:20,
-    10:21,
-    11:9,
-    13:10,
-    14:11,
-    15:12,
-    16:13,
-    17:14,
-    18:15,
-    19:16,
-    21:17,
-    22:18,
-    23:6,
-    24:1,
-    25:2,
-    26:7,
-    27:5
-}
-    return my_dict[i]
-
-
-
-
+from spyre import server
 
 import pandas as pd
+import urllib
+import json
+
+from urllib import request
+
 name='vhi_{}.csv'
-frame = pd.DataFrame() 
+df = pd.DataFrame()
 for i in range(1, 26):
     temp = pd.read_csv(name.format(i), sep='[, ]+', engine='python')
     temp['Province'] = i
-    frame = frame.append(temp, ignore_index=True)
+    df = df.append(temp, ignore_index=True)
 
+class StockExample(server.App):
+    title = "Historical Stock Prices"
 
+    inputs = [{"type": 'dropdown',
+               "label": 'Choose year',
+               "options": [{'label': str(i), 'value': i} for i in range(1982, 2020)],
+               'key': 'year',
+               'value': '1982'},
+                
+                {
+                    "type":'dropdown',
+                    "label": 'Province',
+                    "options" : [ {"label": "1", "value":"1"},
+                                  {"label": "2", "value":"2"},
+                                  {"label": "3", "value":"3"},
+                                  {"label": "4", "value":"4"},
+                                  {"label": "5", "value":"5"},
+                                  {"label": "6", "value":"6"},
+                                  {"label": "7", "value":"7"},
+                                  {"label": "8", "value":"8"},
+                                  {"label": "9", "value":"9"},
+                                  {"label": "10", "value":"10"},
+                                  {"label": "11", "value":"11"},
+                                  {"label": "12", "value":"12"},
+                                  {"label": "13", "value":"13"},
+                                  {"label": "14", "value":"14"},
+                                  {"label": "15", "value":"15"},
+                                  {"label": "16", "value":"16"},
+                                  {"label": "17", "value":"17"},
+                                  {"label": "18", "value":"18"},
+                                  {"label": "19", "value":"19"},
+                                  {"label": "20", "value":"19"},
+                                  {"label": "21", "value":"20"},
+                                  {"label": "22", "value":"21"},
+                                  {"label": "23", "value":"22"},
+                                  {"label": "24", "value":"23"},
+                                  {"label": "25", "value":"24"}],
+                    "key": 'province',
+                    "action_id": "update_data"
+                },
+                {
+                    "type" : 'text',
+                    "key" : 'min',
+                    "label" : 'min',
+                    "action_id" : 'simple_html_output'
+                },
+                {
+                    "type" : 'text',
+                    "key" : 'max',
+                    "label" : 'max',
+                    "action_id" : 'simple_html_output'
+                }
+                    
+            ]
 
-def getByProvinceAndYear(province, year): 
-    return frame[(frame['Province'] == province) & (frame['year'] == year)][['VHI', 'week', 'year']]
+    outputs = [{'type': 'table',
+                'id': 'table1',
+                'control_id': 'apply',
+                'tab': 'Table'},
+               {'type': 'plot',
+                'id': 'plot1',
+                'control_id': 'apply',
+                'tab': 'Plot'}]
 
-def getYearsInRestrictions(province, minVHI, maxVHI, procent):
-    years = frame['year'].unique() 
-    result = [] 
-    for year in years:
-        series = getByProvinceAndYear(province, year) 
-        getMax = series[(series['VHI'] >= 60)]['VHI'].max()
-        week = series[(series['VHI'] == getMax)]['week']
-        count_in_range = series[(series['VHI'] >= minVHI) & (series['VHI'] <= maxVHI)]['VHI'].count() 
-        procent_in_range = count_in_range * 100 / series['VHI'].count() 
-        if procent_in_range >= procent: 
-            result.append(week)
-            result.append(year)
-            
-    return result
+    controls = [{"type": 'button',
+                 'id': 'apply',
+                 'label': 'Apply'}]
+
+    tabs = ["Plot", "Table"]
+
+    def getData(self, params):
+        year = params['year']
+        #province = params['Province']
+        #min = params['min']
+        #max = params['max']
+        f = df[df['year'] == year].filter(['year', 'week', 'VHI', 'TCI', 'VCI'])
+        #final = f[(f['week'] >= float(min)) & (f['week'] <= float(max))]
+        #f['week'] = f['week'].astype(int)
+        #f['week'] = f['week'].astype(str)
+        return f
+
+    def getPlot(self, params):
+        df = self.getData(params)
+        return df.set_index(df['week']).plot()
+
+        
+app = StockExample()
+app.launch()
+#нам нужно передать то, что ввел пользователь и потом вывести ряд для этих параметров
+#
