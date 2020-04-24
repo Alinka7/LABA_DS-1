@@ -85,13 +85,9 @@ class StockExample(server.App):
 
     def getData(self, params):
         year = params['year']
-        #province = params['Province']
-        #min = params['min']
-        #max = params['max']
+       
         f = df[df['year'] == year].filter(['year', 'week', 'VHI', 'TCI', 'VCI'])
-        #final = f[(f['week'] >= float(min)) & (f['week'] <= float(max))]
-        #f['week'] = f['week'].astype(int)
-        #f['week'] = f['week'].astype(str)
+       
         return f
 
     def getPlot(self, params):
@@ -101,5 +97,3 @@ class StockExample(server.App):
         
 app = StockExample()
 app.launch()
-#нам нужно передать то, что ввел пользователь и потом вывести ряд для этих параметров
-#
