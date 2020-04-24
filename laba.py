@@ -84,7 +84,8 @@ class StockExample(server.App):
     tabs = ["Plot", "Table"]
 
     def getData(self, params):
-        year = params['year']
+        year = int(params[´year´])
+       
        
         f = df[df['year'] == year].filter(['year', 'week', 'VHI', 'TCI', 'VCI'])
        
