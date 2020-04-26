@@ -1,8 +1,7 @@
 from spyre import server
 
 import pandas as pd
-import urllib
-import json
+
 
 from urllib import request
 
@@ -56,14 +55,12 @@ class StockExample(server.App):
                 {
                     "type" : 'text',
                     "key" : 'min',
-                    "label" : 'min',
-                    "action_id" : 'simple_html_output'
-                },
+                    "label" : 'min'
+                   
                 {
                     "type" : 'text',
                     "key" : 'max',
-                    "label" : 'max',
-                    "action_id" : 'simple_html_output'
+                    "label" : 'max'
                 }
                     
             ]
